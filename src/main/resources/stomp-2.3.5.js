@@ -7,6 +7,7 @@
    Copyright (C) 2012 [FuseSource, Inc.](http://fusesource.com)
  */
 
+console.log("starting stompjs 2.3.5");
 (function() {
   var Byte, Client, Frame, Stomp,
     __hasProp = {}.hasOwnProperty,

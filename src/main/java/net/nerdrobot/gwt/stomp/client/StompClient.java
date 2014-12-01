@@ -106,6 +106,11 @@ public class StompClient {
         if (self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient != null && !enableDebug) {
             self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.debug = null;
         }
+        
+        
+        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.heartbeat.outgoing = 0;
+        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.heartbeat.incoming = 0;
+        
 
         self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.connect({}, onConnected);
     }-*/;
