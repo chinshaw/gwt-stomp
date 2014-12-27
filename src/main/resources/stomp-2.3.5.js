@@ -465,7 +465,7 @@ console.log("starting stompjs 2.3.5");
       V1_1: '1.1',
       V1_2: '1.2',
       supportedVersions: function() {
-        return '1.1,1.0';
+        return '1.2,1.1,1.0';
       }
     },
     client: function(url, protocols) {
