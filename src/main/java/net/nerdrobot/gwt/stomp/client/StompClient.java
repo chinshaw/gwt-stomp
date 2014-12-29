@@ -9,155 +9,181 @@ import java.util.logging.Logger;
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class StompClient {
-    private static final Logger logger = Logger.getLogger(StompClient.class.getName());
-    private final boolean useSockJs;
-    private String wsURL;
-    private Callback callback;
-    private JavaScriptObject jsoStompClient;
-    private boolean isConnected = false;
-    private Map<String, Subscription> subscriptions;
-    private boolean enableDebug;
+	private static final Logger logger = Logger.getLogger(StompClient.class.getName());
+	private final boolean useSockJs;
+	private String wsURL;
+	private Callback callback;
+	private JavaScriptObject jsoStompClient;
+	private boolean isConnected = false;
+	private Map<String, Subscription> subscriptions;
+	private boolean enableDebug;
 
-    public static interface Callback {
-        void onConnect();
+	private int hbIncoming;
+	
+	private int hbOutgoing;
+	
+	public static interface Callback {
+		void onConnect();
 
-        void onError(String cause);
+		void onError(String cause);
 
-        void onDisconnect();
-    }
+		void onDisconnect();
+	}
 
-    public StompClient(String wsURL, Callback callback, boolean useSockJs, boolean enableDebug) {
-        this.useSockJs = useSockJs;
-        this.wsURL = wsURL;
-        this.callback = callback;
-        this.subscriptions = new HashMap<String, Subscription>();
-        this.enableDebug = enableDebug;
-    }
+	public StompClient(String wsURL, Callback callback, boolean useSockJs, boolean enableDebug) {
+		this.useSockJs = useSockJs;
+		this.wsURL = wsURL;
+		this.callback = callback;
+		this.subscriptions = new HashMap<String, Subscription>();
+		this.enableDebug = enableDebug;
+	}
 
-    public final void connect() {
-        if (isConnected) {
-            logger.log(Level.FINE, "Already connected");
-            return;
-        }
+	public StompClient(String wsURL, Callback callback, boolean useSockJs, boolean enableDebug, int hbIncoming,
+			int hbOutgoing) {
+		this.useSockJs = useSockJs;
+		this.wsURL = wsURL;
+		this.callback = callback;
+		this.subscriptions = new HashMap<String, Subscription>();
+		this.enableDebug = enableDebug;
+	}
 
-        logger.log(Level.FINE, "Connecting to '" + wsURL + "' ...");
-        __connect(wsURL, useSockJs, enableDebug);
-    }
+	public final void connect() {
+		if (isConnected) {
+			logger.log(Level.FINE, "Already connected");
+			return;
+		}
 
-    public final void disconnect() {
-        for (Entry<String, Subscription> id : subscriptions.entrySet()) {
-            unsubscribe(id.getKey());
-        }
+		logger.log(Level.FINE, "Connecting to '" + wsURL + "' ...");
+		__connect(wsURL, useSockJs, enableDebug);
+	}
 
-        logger.log(Level.FINE, "Disconecting from '" + wsURL + "' ...");
-        __disconnect();
-    }
+	public final void disconnect() {
+		for (Entry<String, Subscription> id : subscriptions.entrySet()) {
+			unsubscribe(id.getKey());
+		}
 
-    public final Subscription subscribe(String destination, MessageListener listener) {
-        logger.log(Level.FINE, "Subscribing to destination '" + destination + "' ...");
-        Subscription subscription = __subscribe(destination, listener);
+		logger.log(Level.FINE, "Disconecting from '" + wsURL + "' ...");
+		__disconnect();
+	}
 
-        logger.log(Level.FINE, "Subscribed to destination '" + destination + "' with ID '" + subscription.getId() + "'");
-        subscriptions.put(destination, subscription);
+	public final Subscription subscribe(String destination, MessageListener listener) {
+		logger.log(Level.FINE, "Subscribing to destination '" + destination + "' ...");
+		Subscription subscription = __subscribe(destination, listener);
 
-        return subscription;
-    }
+		logger.log(Level.FINE, "Subscribed to destination '" + destination + "' with ID '" + subscription.getId() + "'");
+		subscriptions.put(destination, subscription);
 
-    public final void unsubscribe(String destination) {
-        Subscription subscription = subscriptions.get(destination);
+		return subscription;
+	}
 
-        if (subscription != null) {
-            logger.log(Level.FINE, "Unsubscribing from destination '" + destination + "' ...");
-            __unsubscribe(subscription);
+	public final void unsubscribe(String destination) {
+		Subscription subscription = subscriptions.get(destination);
 
-            logger.log(Level.FINE, "Unsubscribed from destination '" + destination + "'");
-            subscriptions.remove(destination);
-        }
-    }
+		if (subscription != null) {
+			logger.log(Level.FINE, "Unsubscribing from destination '" + destination + "' ...");
+			__unsubscribe(subscription);
 
-    public native final void send(String destination, String jsonString)
-    /*-{
-        var self = this;
-        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.send(destination, {}, jsonString);
-    }-*/;
+			logger.log(Level.FINE, "Unsubscribed from destination '" + destination + "'");
+			subscriptions.remove(destination);
+		}
+	}
 
-    private native final void __connect(String wsURL, boolean overSockJs, boolean enableDebug)
-    /*-{
-        var self = this;
+	public native final void send(String destination, String jsonString)
+	/*-{
+	    var self = this;
+	    self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.send(destination, {}, jsonString);
+	}-*/;
 
-    	var onConnected = function () {
-            self.@net.nerdrobot.gwt.stomp.client.StompClient::onConnected()();
-        };
+	private native final void __connect(String wsURL, boolean overSockJs, boolean enableDebug)
+	/*-{
+	    var self = this;
 
-        // TODO: Not used. Could not add to connect() because stomp.connect() is looking
-        //       for Function object while parsing arguments.
-    	var onError = function (cause) {
-    		self.@net.nerdrobot.gwt.stomp.client.StompClient::onError(Ljava/lang/String;)(cause);
-    	};
+		var onConnected = function () {
+	        self.@net.nerdrobot.gwt.stomp.client.StompClient::onConnected()();
+	    };
 
-        if (overSockJs === true) {
-            var socket = new $wnd.SockJS(wsURL);
+	    // TODO: Not used. Could not add to connect() because stomp.connect() is looking
+	    //       for Function object while parsing arguments.
+		var onError = function (cause) {
+			self.@net.nerdrobot.gwt.stomp.client.StompClient::onError(Ljava/lang/String;)(cause);
+		};
 
-            self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient = $wnd.Stomp.over(socket);
-        } else {
-            self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient = $wnd.Stomp.client(wsURL);
-        }
+	    if (overSockJs === true) {
+	        var socket = new $wnd.SockJS(wsURL);
 
-        if (self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient != null && !enableDebug) {
-            self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.debug = null;
-        }
+	        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient = $wnd.Stomp.over(socket);
+	    } else {
+	        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient = $wnd.Stomp.client(wsURL);
+	    }
 
-        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.connect({}, onConnected);
-    }-*/;
+	    if (self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient != null && !enableDebug) {
+	        self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.debug = null;
+	    }
 
-    private native final void __disconnect()
-    /*-{
-    	var self = this;
+	    self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.connect({}, onConnected);
+	}-*/;
 
-    	var ondisconnect = function(){
-    		self.@net.nerdrobot.gwt.stomp.client.StompClient::onDisconnect()();
-    	};
+	private native final void __disconnect()
+	/*-{
+		var self = this;
 
-    	self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.disconnect(ondisconnect);
-    }-*/;
+		var ondisconnect = function(){
+			self.@net.nerdrobot.gwt.stomp.client.StompClient::onDisconnect()();
+		};
 
-    private native final Subscription __subscribe(String destination, MessageListener listener)
-    /*-{
-        var self = this;
+		self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.disconnect(ondisconnect);
+	}-*/;
 
-    	var onMessage = function (message) {
-    		listener.@net.nerdrobot.gwt.stomp.client.MessageListener::onMessage(Lnet/nerdrobot/gwt/stomp/client/Message;)(message);
-    	};
+	private native final Subscription __subscribe(String destination, MessageListener listener)
+	/*-{
+	    var self = this;
 
-    	var subscription = self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.subscribe(destination, onMessage);
+		var onMessage = function (message) {
+			listener.@net.nerdrobot.gwt.stomp.client.MessageListener::onMessage(Lnet/nerdrobot/gwt/stomp/client/Message;)(message);
+		};
 
-     	return subscription;
-    }-*/;
+		var subscription = self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.subscribe(destination, onMessage);
 
-    private native final void __unsubscribe(Subscription subscription)
-    /*-{
-        subscription.unsubscribe();
-    }-*/;
+	 	return subscription;
+	}-*/;
 
-    /* Need to wrap the callbacks */
-    private void onConnected() {
-        if (callback != null && !isConnected) {
-            isConnected = true;
-            callback.onConnect();
-        }
-    }
+	private native final void __unsubscribe(Subscription subscription)
+	/*-{
+	    subscription.unsubscribe();
+	}-*/;
+	
+	public native void setHeartbeatOutgoing(int heartBeatOutgoing) /*-{
+		var self = this;
+		self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.heartbeat.outgoing = heartBeatOutgoing;
+	}-*/;
+	
+	public native void setHeartbeatIncoming(int heartBeatIncoming) /*-{
+		var self = this;
+		self.@net.nerdrobot.gwt.stomp.client.StompClient::jsoStompClient.heartbeat.outgoing = heartBeatIncoming;
+	}-*/;
+	
 
-    private void onDisconnect() {
-        if (callback != null) {
-            callback.onDisconnect();
-            isConnected = false;
-        }
-    }
+	/* Need to wrap the callbacks */
+	private void onConnected() {
+		if (callback != null && !isConnected) {
+			isConnected = true;
+			callback.onConnect();
+		}
+	}
 
-    private void onError(String cause) {
-        if (callback != null) {
-            callback.onError(cause);
-        }
-    }
+	private void onDisconnect() {
+		if (callback != null) {
+			callback.onDisconnect();
+			isConnected = false;
+		}
+	}
+
+	private void onError(String cause) {
+		if (callback != null) {
+			callback.onError(cause);
+		}
+	}
+	
+	
 
 }

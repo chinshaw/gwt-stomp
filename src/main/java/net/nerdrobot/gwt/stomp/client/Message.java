@@ -10,9 +10,22 @@ public class Message extends JavaScriptObject {
     /*-{
         return this.headers;
     }-*/;
+    
+    public native final void setHeaders(Header headers) /*-{
+    	this.headers = headers;
+    }-*/;
 
     public native final String getBody()
     /*-{
         return this.body;
+    }-*/;
+    
+    
+    /**
+     * Useful for testing your api.
+     * @param body
+     */
+    public native final void setBody(final String body) /*-{
+    	this.body = body;
     }-*/;
 }
